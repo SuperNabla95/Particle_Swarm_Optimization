@@ -15,7 +15,7 @@ using namespace std;
 #define USELESS -1
 #define MIN_FLOAT -numeric_limits<float>::max()
 
-class Threads{
+class Thread{
     const int niter,pts;
     const float min_x,max_x,min_y,max_y;
     pair<float,float> gmax_pos;
@@ -27,7 +27,7 @@ class Threads{
 
     struct sequential_model{
 
-        void operator() (Threads *outer)
+        void operator() (Thread *outer)
         {
             //init local data structures
             if(PRINT_STATS){outer->_timer->register_event(INITIALIZATION,USELESS);}
@@ -93,7 +93,7 @@ class Threads{
     };//end struct sequential model
 
   public:
-    Threads(
+    Thread(
         float (*func)(float,float),
         int niter,
         int points,
@@ -102,12 +102,12 @@ class Threads{
         int min_y,
         int max_y
     );
-    //~Threads();
+    //~Thread();
     void do_job();
     
-}; //end class Threads
+}; //end class Thread
 
-Threads::Threads(
+Thread::Thread(
         float (*func)(float,float),
         int niter,
         int points,
@@ -127,11 +127,11 @@ Threads::Threads(
       gmax_pos(USELESS,USELESS),
       gmax(FLT_MIN) {}
 
-void Threads::do_job(){
+void Thread::do_job(){
     long int t0 = std::chrono::system_clock::now().time_since_epoch().count();
     sequential_model()(this);
     long int elapsed = std::chrono::system_clock::now().time_since_epoch().count() - t0;
-    cout << "completion time (milliseconds): " << elapsed/1000 << endl;
+    cout << "completion time (microseconds): " << elapsed/1000 << endl;
     if(PRINT_STATS){this->_timer->print_data(this->niter,this->pts);}
 }
 

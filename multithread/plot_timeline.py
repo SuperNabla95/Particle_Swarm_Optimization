@@ -109,7 +109,7 @@ def main() :
     # Custom axis
     plt.yticks(r, names, fontweight='bold')
     plt.ylabel("threads")
-    plt.xlabel("nanoseconds")
+    plt.xlabel("microseconds")
     plt.title("{} threads, {} particles, {} iterations".format(niter,npts,nt))
     
     # Show graphic

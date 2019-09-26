@@ -236,7 +236,7 @@ void Threads::do_job(){
     auto s = new map_reduce_pattern::state(ROOT);
     map_reduce_pattern()(this,s);
     long int elapsed = std::chrono::system_clock::now().time_since_epoch().count() - t0;
-    cout << "completion time (milliseconds): " << elapsed/1000 << endl;
+    cout << "completion time (microseconds): " << elapsed/1000 << endl;
     if(PRINT_STATS){this->_timer->print_data(this->niter,this->pts);}
 }
 

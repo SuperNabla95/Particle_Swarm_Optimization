@@ -42,7 +42,8 @@ struct event{
             color = color_event<DEFAULT>::value;
             break;
         }
-        return ::to_string(time) + "@" + color;
+        //conversion nano- to microseconds
+        return ::to_string(time/100) + "@" + color;
     }
 };
 

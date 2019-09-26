@@ -74,17 +74,17 @@ def left_values(bars) :
         prev = np.add(prev, bar).tolist()
     return lefts,nt
 
-def read_niter_npts_nt(filename) :
+def read_npts_niter(filename) :
     tokens = filename.split("_")
-    tokens[3] = tokens[3].split(".txt")[0]
-    return tokens[1],tokens[2],tokens[3]
+    tokens[2] = tokens[2].split(".txt")[0]
+    return tokens[1],tokens[2]
 
 def main() :
     if len(sys.argv) != 1+1 :
         print("Usage is:",sys.argv[0],"<stats_file_path>")
         return -1
     # parse filename
-    niter,npts,nt = read_niter_npts_nt(sys.argv[1])
+    npts,niter = read_npts_niter(sys.argv[1])
 
     data = read_data(sys.argv[1])
     bars,colors = compute_bars(data)
@@ -109,8 +109,8 @@ def main() :
     # Custom axis
     plt.yticks(r, names, fontweight='bold')
     plt.ylabel("threads")
-    plt.xlabel("nanoseconds")
-    plt.title("{} threads, {} particles, {} iterations".format(niter,npts,nt))
+    plt.xlabel("microseconds")
+    plt.title("sequential, {} particles, {} iterations".format(str(npts),str(niter)))
     
     # Show graphic
     plt.show()

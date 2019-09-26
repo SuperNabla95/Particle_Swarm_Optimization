@@ -3,7 +3,7 @@
 #include <string>
 #include <cmath>
 
-#include "Threads.cpp"
+#include "Thread.cpp"
 using namespace std;
 
 
@@ -19,7 +19,7 @@ int main(int argc, char* argv[]){
     int max_x = atoi(argv[4]);
     int min_y = atoi(argv[5]);
     int max_y = atoi(argv[6]);
-    Threads t(func,niter,points,min_x,max_x,min_y,max_y);
+    Thread t(func,niter,points,min_x,max_x,min_y,max_y);
     t.do_job();
     return 0;
 }
