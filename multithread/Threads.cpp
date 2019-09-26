@@ -136,7 +136,7 @@ class Threads{
                         lmax_pos[p].second = points[p].second;
 
                         //local reduce
-                        if(local_s->pgmax < value){
+                        if(outer->gmax < value){
                                 local_s->pgmax = value;
                                 local_s->pgmax_pos.first = points[p].first;
                                 local_s->pgmax_pos.second = points[p].second;
@@ -232,8 +232,11 @@ Threads::Threads(
       iter(0) {}
 
 void Threads::do_job(){
+    long int t0 = std::chrono::system_clock::now().time_since_epoch().count();
     auto s = new map_reduce_pattern::state(ROOT);
     map_reduce_pattern()(this,s);
+    long int elapsed = std::chrono::system_clock::now().time_since_epoch().count() - t0;
+    cout << "completion time (milliseconds): " << elapsed/1000 << endl;
     if(PRINT_STATS){this->_timer->print_data(this->niter,this->pts);}
 }
 
