@@ -15,6 +15,10 @@ using namespace std;
 #define USELESS -1
 #define MIN_FLOAT -numeric_limits<float>::max()
 
+struct job_result{
+    const float value, pos_x, pos_y;
+};
+
 class Threads{
     const int niter,pts,nt;
     const float min_x,max_x,min_y,max_y;
@@ -204,7 +208,7 @@ class Threads{
         int nt
     );
     //~Threads();
-    void do_job();
+    job_result do_job();
     
 }; //end class Threads
 
@@ -231,23 +235,14 @@ Threads::Threads(
       gmax(FLT_MIN),
       iter(0) {}
 
-void Threads::do_job(){
+job_result Threads::do_job(){
     long int t0 = std::chrono::system_clock::now().time_since_epoch().count();
     auto s = new map_reduce_pattern::state(ROOT);
     map_reduce_pattern()(this,s);
     long int elapsed = std::chrono::system_clock::now().time_since_epoch().count() - t0;
     cout << "completion time (microseconds): " << elapsed/1000 << endl;
     if(PRINT_STATS){this->_timer->print_data(this->niter,this->pts);}
-}
-
-struct pizza{
-    float operator()(float a, float b){
-        return 1000 - ((a-5)*(a-5)+(b-5)*(b-5));
-    }
-};
-float func (float a, float b){
-    return 1000 - ((a-5)*(a-5)+(b-5)*(b-5));
-    //return (a+b)*(a+b);
+    return job_result{this->gmax,this->gmax_pos.first,this->gmax_pos.second};
 }
 
 

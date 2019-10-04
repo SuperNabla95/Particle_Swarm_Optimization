@@ -6,6 +6,10 @@
 #include "Threads.cpp"
 using namespace std;
 
+float func (float a, float b){
+    return 1000 - ((a-5)*(a-5)+(b-70)*(b-70));
+    //return (a+b)*(a+b);
+}
 
 int main(int argc, char* argv[]){
 	if(argc != 7+1){
@@ -23,6 +27,7 @@ int main(int argc, char* argv[]){
 
     int points_per_thread = points / nt;
     Threads t(func,niter,points_per_thread,min_x,max_x,min_y,max_y,nt);
-    t.do_job();
+    auto res = t.do_job();
+    cout << res.value << " " << res.pos_x << " " << res.pos_y << endl;
     return 0;
 }
