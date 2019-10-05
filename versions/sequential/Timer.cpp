@@ -43,7 +43,7 @@ struct event{
             break;
         }
         //conversion nano- to microseconds
-        return ::to_string(time/100) + "@" + color;
+        return ::to_string(time/1000) + "@" + color;
     }
 };
 
