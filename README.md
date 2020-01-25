@@ -43,7 +43,8 @@ When launching the application, you need to pass **seven numeric arguments** in 
 - the minimum y-value in the search space
 - the maximum y-value in the search space
 - the time needed for the function to be evaluated
-For the `fastflow` and the `multithread` versions you need to specify even another argument>
+
+For the `fastflow` and the `multithread` versions you need to specify yet another argument:
 - the parallelism degree
 
 For example, from the `<PSO HOME>` you could do:
@@ -52,17 +53,13 @@ For example, from the `<PSO HOME>` you could do:
 ./versions/multithread/build/apps/particle_swarm_optimization 1000 10 0 100 0 100 10 4
 ```
 
- Pay attention :warning: at the following **specifications**:
-- The watermark picture must have three channels (RGB); and
-- the dimensions (i.e. width and height) must be greater or equal than the dimensions of any input images;
-
 ----
 ## Visualize the time statistics :chart_with_upwards_trend:
 In the `performance_evaluation` folder you could find some utilities to measure the times of the application.
 - You can run the `write_metrics.py` script to run *two* experiments about the time performances of the PSO application. The parameters of the experiments can be set in `conf.py`.
-- After running `write_metrics.py`, you can plot the resulting data using `plot_metrics.py` (Warning: this second step requires Python 3, so cannot be executed on the Xeon Phi machine)
+- After running `write_metrics.py`, you can plot the resulting data using `plot_metrics.py` (:warning: Warning: this second step requires Python 3, so cannot be executed on the Xeon Phi machine)
 
-In the `multithread` and in the `sequential` directories you will find a sub-folder called `stats`, which can be used to plot a timeline chart (Python 3 required).
+In the `multithread` and in the `sequential` directories you will find a sub-folder called `stats`, which can be used to plot a timeline chart (:warning: Python 3 required).
 For example, from the `<PSO HOME>/versions/multithread` directory you could run:
 ```bash
 #example
