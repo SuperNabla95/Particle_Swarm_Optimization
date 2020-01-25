@@ -1,2 +1,0 @@
-best extimate: 1000 (x: 4.99888, y: 69.9962)
-completion time (microseconds): 79225
