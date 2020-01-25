@@ -15,7 +15,7 @@ This project aims at the implementation of a C++ multi-thread (and so faster) ve
 ---
 ## Run the code :rocket:
 
-First of all you need to clone the `fastflow` repository from the [official website](https://github.com/fastflow/fastflow). Clone the repository in the **home** folder of your machine. 
+First of all you need to clone the `fastflow` repository from the [official website](https://github.com/fastflow/fastflow). Clone the repository in the **home** directory of your machine. 
 
 In the `versions` folder of the PSO project you will find three sub-directory, namely:
 - sequential
