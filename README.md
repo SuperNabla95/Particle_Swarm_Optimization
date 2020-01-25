@@ -5,8 +5,7 @@
 ## What is all about? :mega:
 from the :globe_with_meridians:[Wikipedia page](https://en.wikipedia.org/wiki/Digital_watermarking):
 
-> the Particle Swarm Optimization (PSO) is “a computational method that optimizes a problem by itera-
-tively trying to improve a candidate solution."
+> the Particle Swarm Optimization (PSO) is “a computational method that optimizes a problem by iteratively trying to improve a candidate solution."
 
 > "It solves a problem by having a population of candidate solutions, here dubbed particles, and moving these particles around in the search-space according to simple mathematical formulae over the particle’s position and velocity."
 ---
