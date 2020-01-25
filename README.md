@@ -1,5 +1,5 @@
-# Watermark ― SPM :helicopter:
-[SPM, fall 2019]
+# Particle Swarm Optimization ― SPM :helicopter:
+[SPM, spring 2018]
 
 ----
 ## What is all about? :mega:
