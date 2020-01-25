@@ -29,10 +29,13 @@ make release -C sequential
 make release -C multithread
 make release -C fastflow
 ```
+
+The compilation process will output -- for each of the three versions -- the `particle_swarm_optimization` executable. The executable will be made available at the path: `<PSO HOME>/versions/<VERSION>/build/apps/particle_swarm_optimization`. 
+
 :exclamation: **Note:** if you do **not** want the optimized version (option `O3`) simply use `make` instead of `make release`. If you meet some problems during the compilation process, or you simply want to re-compile from scratch the project for some reason, use `make clean release` instead of `make release`.
 
 :exclamation: **Note:** To compile the code on the **Xeon Phi** machine of the University of Pisa you can use the standard old compiler available when you access the machine (i.e. there is no need to use the `source` command).
-The compilation process will output -- for each of the three versions -- the `particle_swarm_optimization` executable. This executable will be made available at the path: `<PSO HOME>/versions/<VERSION>/build/apps/particle_swarm_optimization`. 
+
 
 When launching the application, you need to pass **seven numeric arguments** in the following order:
 - the number of particles in the swarm
