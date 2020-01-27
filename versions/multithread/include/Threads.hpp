@@ -13,7 +13,7 @@ using namespace std;
 
 #define ROOT 0
 #define USELESS -1
-#define MIN_FLOAT -numeric_limits<float>::max()
+#define MAX_FLOAT numeric_limits<float>::max()
 
 struct job_result{
     const float value, pos_x, pos_y;
@@ -22,8 +22,8 @@ struct job_result{
 class Threads{
     const int niter,pts,nt;
     const float min_x,max_x,min_y,max_y;
-    volatile pair<float,float> gmax_pos;
-    volatile float gmax;
+    volatile pair<float,float> gmin_pos;
+    volatile float gmin;
     volatile int iter;
 
   private:
@@ -34,20 +34,20 @@ class Threads{
 
         struct state {
             volatile bool is_done;
-            volatile float pgmax;
-            volatile pair<float,float> pgmax_pos;
+            volatile float pgmin;
+            volatile pair<float,float> pgmin_pos;
             int tid;
 
             state() {}
             state(int tid) : 
                 is_done(false),
-                pgmax(FLT_MIN),
-                pgmax_pos(pair<float,float>(USELESS,USELESS)),
+                pgmin(MAX_FLOAT),
+                pgmin_pos(pair<float,float>(USELESS,USELESS)),
                 tid(tid) {}
 
             void set_tid(int tid){
                 this->is_done=false;
-                this->pgmax=FLT_MIN;
+                this->pgmin=MAX_FLOAT;
                 this->tid=tid;
             }
         };
@@ -61,7 +61,7 @@ class Threads{
             threads[1] = thread(map_reduce_pattern(),outer,children_s+1);
         }
 
-        inline void gmax_reduce(Threads *outer, struct state *children_s, struct state *local_s){
+        inline void gmin_reduce(Threads *outer, struct state *children_s, struct state *local_s){
             //child 0
             if(children_s[0].tid >= outer->nt)
                 return;
@@ -69,10 +69,10 @@ class Threads{
                 //spin loop
             }
             children_s[0].is_done = false;
-            if(local_s->pgmax < children_s[0].pgmax){
-                local_s->pgmax = children_s[0].pgmax;
-                local_s->pgmax_pos.first = children_s[0].pgmax_pos.first;
-                local_s->pgmax_pos.second = children_s[0].pgmax_pos.second;
+            if(local_s->pgmin > children_s[0].pgmin){
+                local_s->pgmin = children_s[0].pgmin;
+                local_s->pgmin_pos.first = children_s[0].pgmin_pos.first;
+                local_s->pgmin_pos.second = children_s[0].pgmin_pos.second;
             }
 
             //child 1
@@ -82,10 +82,10 @@ class Threads{
                 //spin loop
             }
             children_s[1].is_done = false;
-            if(local_s->pgmax < children_s[1].pgmax){
-                local_s->pgmax = children_s[1].pgmax;
-                local_s->pgmax_pos.first = children_s[1].pgmax_pos.first;
-                local_s->pgmax_pos.second = children_s[1].pgmax_pos.second;
+            if(local_s->pgmin > children_s[1].pgmin){
+                local_s->pgmin = children_s[1].pgmin;
+                local_s->pgmin_pos.first = children_s[1].pgmin_pos.first;
+                local_s->pgmin_pos.second = children_s[1].pgmin_pos.second;
             }
         }
 
@@ -112,8 +112,8 @@ class Threads{
 
             if(PRINT_STATS){outer->_timer->register_event(local_s->tid,INITIALIZATION,USELESS);}
             //init local data structures
-            vector<pair<float,float>> points(outer->pts), velocity(outer->pts), lmax_pos(outer->pts);
-            vector<float> lmax(outer->pts);
+            vector<pair<float,float>> points(outer->pts), velocity(outer->pts), lmin_pos(outer->pts);
+            vector<float> lmin(outer->pts);
 
             default_random_engine dre;
             dre.seed(7*local_s->tid*local_s->tid*rand()+5*local_s->tid+3);
@@ -123,42 +123,42 @@ class Threads{
                 points[i].second = dis_y(dre);
                 velocity[i].first = random_fraction(dre);
                 velocity[i].second = random_fraction(dre);
-                lmax_pos[i].first = USELESS;
-                lmax_pos[i].second = USELESS;
-                lmax[i] = FLT_MIN;
+                lmin_pos[i].first = USELESS;
+                lmin_pos[i].second = USELESS;
+                lmin[i] = MAX_FLOAT;
             }
 
             //processing
             for(int iter=0; iter<outer->niter; iter++){
                 if(PRINT_STATS){outer->_timer->register_event(local_s->tid,STEP_COMPUTATION,iter);}
-                //local max computation
+                //local min computation
                 for(int p=0; p<outer->pts; p++){
                     float value = (outer->_func)(points[p].first,points[p].second);
-                    if(lmax[p] < value){
-                        lmax[p] = value;
-                        lmax_pos[p].first = points[p].first;
-                        lmax_pos[p].second = points[p].second;
+                    if(lmin[p] > value){
+                        lmin[p] = value;
+                        lmin_pos[p].first = points[p].first;
+                        lmin_pos[p].second = points[p].second;
 
                         //local reduce
-                        if(outer->gmax < value){
-                                local_s->pgmax = value;
-                                local_s->pgmax_pos.first = points[p].first;
-                                local_s->pgmax_pos.second = points[p].second;
+                        if(outer->gmin > value){
+                                local_s->pgmin = value;
+                                local_s->pgmin_pos.first = points[p].first;
+                                local_s->pgmin_pos.second = points[p].second;
                         }
                     }
                 }
                 //global reduce
                 if(PRINT_STATS){outer->_timer->register_event(local_s->tid,REDUCE_OPS,iter);}
-                gmax_reduce(outer,children_s,local_s);
+                gmin_reduce(outer,children_s,local_s);
                 //flag is_done
                 local_s->is_done = true;
                 if(local_s->tid == ROOT){
-                    if(local_s->pgmax > outer->gmax){
-                        outer->gmax_pos.first = local_s->pgmax_pos.first;
-                        outer->gmax_pos.second = local_s->pgmax_pos.second;
-                        outer->gmax = local_s->pgmax;
+                    if(outer->gmin > local_s->pgmin){
+                        outer->gmin_pos.first = local_s->pgmin_pos.first;
+                        outer->gmin_pos.second = local_s->pgmin_pos.second;
+                        outer->gmin = local_s->pgmin;
                     }
-                    if(PRINT_LOG){cout << "********************************************************************\nITERATION " + to_string(iter) + " gmax("+to_string(outer->gmax_pos.first)+","+to_string(outer->gmax_pos.second)+")="+to_string(outer->gmax)+"\n";}
+                    if(PRINT_LOG){cout << "********************************************************************\nITERATION " + to_string(iter) + " gmin("+to_string(outer->gmin_pos.first)+","+to_string(outer->gmin_pos.second)+")="+to_string(outer->gmin)+"\n";}
                     outer->iter += 1;
                 }
                 //wait reduce termination
@@ -173,12 +173,12 @@ class Threads{
                     r_2 = random_fraction(dre);
                     velocity[i].first = 
                                 A*velocity[i].first +
-                                B*r_1*(lmax_pos[i].first - points[i].first) +
-                                C*r_2*(outer->gmax_pos.first - points[i].first);
+                                B*r_1*(lmin_pos[i].first - points[i].first) +
+                                C*r_2*(outer->gmin_pos.first - points[i].first);
                     velocity[i].second = 
                                 A*velocity[i].second +
-                                B*r_1*(lmax_pos[i].second - points[i].second) +
-                                C*r_2*(outer->gmax_pos.second - points[i].second);
+                                B*r_1*(lmin_pos[i].second - points[i].second) +
+                                C*r_2*(outer->gmin_pos.second - points[i].second);
                     points[i].first += velocity[i].first;
                     points[i].second += velocity[i].second;
                     //limits
@@ -187,7 +187,7 @@ class Threads{
                     points[i].second = max<float>(points[i].second,outer->min_y);
                     points[i].second = min<float>(points[i].second,outer->max_y);
                 }
-                if(PRINT_LOG){cout << "tid: " + to_string(local_s->tid) + " (iter "+to_string(iter)+") pgmax("+to_string(local_s->pgmax_pos.first)+","+to_string(local_s->pgmax_pos.second)+")="+to_string(local_s->pgmax)+"\n";}
+                if(PRINT_LOG){cout << "tid: " + to_string(local_s->tid) + " (iter "+to_string(iter)+") pgmin("+to_string(local_s->pgmin_pos.first)+","+to_string(local_s->pgmin_pos.second)+")="+to_string(local_s->pgmin)+"\n";}
                 }//end iteration for            
 
             if(PRINT_STATS){outer->_timer->register_event(local_s->tid,FORK_JOIN_OPS,USELESS);}
@@ -231,8 +231,8 @@ Threads::Threads(
       min_y(min_y),
       max_y(max_y),
       nt(nt),
-      gmax_pos(USELESS,USELESS),
-      gmax(FLT_MIN),
+      gmin_pos(USELESS,USELESS),
+      gmin(MAX_FLOAT),
       iter(0) {}
 
 job_result Threads::do_job(){
@@ -241,9 +241,9 @@ job_result Threads::do_job(){
     map_reduce_pattern()(this,s);
     long int elapsed = std::chrono::system_clock::now().time_since_epoch().count() - t0;
     cout << "completion time (microseconds): " << elapsed/1000 << endl;
-    cout << "best extimate: " << gmax << " (x: " << gmax_pos.first << ", y: " << gmax_pos.second << ")" << endl;
+    cout << "best extimate: " << gmin << " (x: " << gmin_pos.first << ", y: " << gmin_pos.second << ")" << endl;
     if(PRINT_STATS){this->_timer->print_data(this->niter,this->pts);}
-    return job_result{this->gmax,this->gmax_pos.first,this->gmax_pos.second};
+    return job_result{this->gmin,this->gmin_pos.first,this->gmin_pos.second};
 }
 
 

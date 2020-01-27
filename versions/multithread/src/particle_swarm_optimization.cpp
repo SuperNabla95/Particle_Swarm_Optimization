@@ -12,7 +12,7 @@ inline float test_func (float a, float b, int delay_microsecs){
     while( end <= start + 1000*delay_microsecs ){
         end = std::chrono::system_clock::now().time_since_epoch().count();
     }
-    return 1000 - ((a-5)*(a-5)+(b-70)*(b-70)) + end%2;
+    return (a-5)*(a-5)+(b-70)*(b-70) + end%2;
 }
 
 int main(int argc, char* argv[]){

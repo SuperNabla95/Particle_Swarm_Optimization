@@ -13,7 +13,7 @@ using namespace std;
 
 #define ROOT 0
 #define USELESS -1
-#define MIN_FLOAT -numeric_limits<float>::max()
+#define MAX_FLOAT numeric_limits<float>::max()
 
 struct job_result{
     const float value, pos_x, pos_y;
@@ -22,8 +22,8 @@ struct job_result{
 class Thread{
     const int niter,pts;
     const float min_x,max_x,min_y,max_y;
-    pair<float,float> gmax_pos;
-    float gmax;
+    pair<float,float> gmin_pos;
+    float gmin;
 
   private:
     std::function<float(float,float)> _func;
@@ -35,8 +35,8 @@ class Thread{
         {
             //init local data structures
             if(PRINT_STATS){outer->_timer->register_event(INITIALIZATION,USELESS);}
-            vector<pair<float,float>> points(outer->pts), velocity(outer->pts), lmax_pos(outer->pts);
-            vector<float> lmax(outer->pts);
+            vector<pair<float,float>> points(outer->pts), velocity(outer->pts), lmin_pos(outer->pts);
+            vector<float> lmin(outer->pts);
 
             default_random_engine dre;
             dre.seed(7*rand()+3);
@@ -46,27 +46,27 @@ class Thread{
                 points[i].second = dis_y(dre);
                 velocity[i].first = random_fraction(dre);
                 velocity[i].second = random_fraction(dre);
-                lmax_pos[i].first = USELESS;
-                lmax_pos[i].second = USELESS;
-                lmax[i] = FLT_MIN;
+                lmin_pos[i].first = USELESS;
+                lmin_pos[i].second = USELESS;
+                lmin[i] = MAX_FLOAT;
             }
 
             //processing
             for(int iter=0; iter<outer->niter; iter++){
                 if(PRINT_STATS){outer->_timer->register_event(STEP_COMPUTATION,iter);}
-                //local max computation
+                //local min computation
                 for(int p=0; p<outer->pts; p++){
                     float value = (outer->_func)(points[p].first,points[p].second);
-                    if(lmax[p] < value){
-                        lmax[p] = value;
-                        lmax_pos[p].first = points[p].first;
-                        lmax_pos[p].second = points[p].second;
+                    if(lmin[p] > value){
+                        lmin[p] = value;
+                        lmin_pos[p].first = points[p].first;
+                        lmin_pos[p].second = points[p].second;
 
                         //reduce
-                        if(outer->gmax < value){
-                                outer->gmax = value;
-                                outer->gmax_pos.first = points[p].first;
-                                outer->gmax_pos.second = points[p].second;
+                        if(outer->gmin > value){
+                                outer->gmin = value;
+                                outer->gmin_pos.first = points[p].first;
+                                outer->gmin_pos.second = points[p].second;
                         }
                     }
                 }
@@ -77,12 +77,12 @@ class Thread{
                     r_2 = random_fraction(dre);
                     velocity[i].first = 
                                 A*velocity[i].first +
-                                B*r_1*(lmax_pos[i].first - points[i].first) +
-                                C*r_2*(outer->gmax_pos.first - points[i].first);
+                                B*r_1*(lmin_pos[i].first - points[i].first) +
+                                C*r_2*(outer->gmin_pos.first - points[i].first);
                     velocity[i].second = 
                                 A*velocity[i].second +
-                                B*r_1*(lmax_pos[i].second - points[i].second) +
-                                C*r_2*(outer->gmax_pos.second - points[i].second);
+                                B*r_1*(lmin_pos[i].second - points[i].second) +
+                                C*r_2*(outer->gmin_pos.second - points[i].second);
                     points[i].first += velocity[i].first;
                     points[i].second += velocity[i].second;
                     //limits
@@ -128,17 +128,17 @@ Thread::Thread(
       max_x(max_x),
       min_y(min_y),
       max_y(max_y),
-      gmax_pos(USELESS,USELESS),
-      gmax(FLT_MIN) {}
+      gmin_pos(USELESS,USELESS),
+      gmin(MAX_FLOAT) {}
 
 job_result Thread::do_job(){
     long int t0 = std::chrono::system_clock::now().time_since_epoch().count();
     sequential_model()(this);
     long int elapsed = std::chrono::system_clock::now().time_since_epoch().count() - t0;
     cout << "completion time (microseconds): " << elapsed/1000 << endl;
-    cout << "best extimate: " << gmax << " (x: " << gmax_pos.first << ", y: " << gmax_pos.second << ")" << endl;
+    cout << "best extimate: " << gmin << " (x: " << gmin_pos.first << ", y: " << gmin_pos.second << ")" << endl;
     if(PRINT_STATS){this->_timer->print_data(this->niter,this->pts);}
-    return job_result{gmax,gmax_pos.first,gmax_pos.second};
+    return job_result{gmin,gmin_pos.first,gmin_pos.second};
 }
 
 

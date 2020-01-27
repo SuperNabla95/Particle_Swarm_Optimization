@@ -6,7 +6,7 @@ using namespace ff;
 using namespace std;
 
 #define USELESS -1
-#define MIN_FLOAT -numeric_limits<float>::max()
+#define MAX_FLOAT numeric_limits<float>::max()
 
 #include<algorithm>
 #include<cfloat>
@@ -24,24 +24,23 @@ inline float test_func (float a, float b, int delay_microsecs){
     while( end <= start + 1000*delay_microsecs ){
         end = std::chrono::system_clock::now().time_since_epoch().count();
     }
-    return 1000 - ((a-5)*(a-5)+(b-70)*(b-70)) + end%2;
-    //return (a+b)*(a+b);
+    return (a-5)*(a-5)+(b-70)*(b-70) + end%2;
 }
 
-struct global_maximum{
+struct global_minimum{
   float value, pos_x, pos_y;
 
-  global_maximum(){
-    value = MIN_FLOAT;
+  global_minimum(){
+    value = MAX_FLOAT;
     pos_x = USELESS;
     pos_y = USELESS;
   }
 
-  inline bool operator<(const global_maximum &other){
-    return this->value < other.value;
+  inline bool operator>(const global_minimum &other){
+    return this->value > other.value;
   }
 
-  inline void operator=(const global_maximum &other){
+  inline void operator=(const global_minimum &other){
     this->value = other.value;
     this->pos_x = other.pos_x;
     this->pos_y = other.pos_y;
@@ -68,51 +67,51 @@ int main(int argc, char* argv[]){
 
   long int t0 = std::chrono::system_clock::now().time_since_epoch().count();
   //initialization
-  vector<pair<float,float>> points(pts), velocity(pts), lmax_pos(pts);
-  vector<float> lmax(pts);
+  vector<pair<float,float>> points(pts), velocity(pts), lmin_pos(pts);
+  vector<float> lmin(pts);
   default_random_engine dre;
   dre.seed(rand());
   uniform_real_distribution<float> dis_x(min_x,max_x),dis_y(min_y,max_y),random_fraction(0,1);
   
-  struct global_maximum gmax;
-  const struct global_maximum gmax_id;
+  struct global_minimum gmin;
+  const struct global_minimum gmin_id;
   
-  ParallelForReduce<global_maximum> pfr(nt,SPINWAIT);
-  //ParallelForReduce<global_maximum> pfr(nt,SPINWAIT);
+  ParallelForReduce<global_minimum> pfr(nt,SPINWAIT);
+  //ParallelForReduce<global_minimum> pfr(nt);
 
   //only phases 1 and 2 of the very first iteration here:
   pfr.parallel_reduce(
-      gmax,
-      gmax_id,
+      gmin,
+      gmin_id,
       0,pts,STRIDE,
       
-      [&points,&velocity,&lmax_pos,&lmax,&dis_x,&dis_y,&dre,&random_fraction,&_func](const long i, global_maximum &pgmax) {
+      [&points,&velocity,&lmin_pos,&lmin,&dis_x,&dis_y,&dre,&random_fraction,&_func](const long i, global_minimum &pgmin) {
         //init
         points[i].first = dis_x(dre);
         points[i].second = dis_y(dre);
         velocity[i].first = random_fraction(dre);
         velocity[i].second = random_fraction(dre);
-        lmax_pos[i].first = USELESS;
-        lmax_pos[i].second = USELESS;
-        lmax[i] = FLT_MIN;
+        lmin_pos[i].first = USELESS;
+        lmin_pos[i].second = USELESS;
+        lmin[i] = FLT_MIN;
 
         float value = (_func)(points[i].first,points[i].second);
         //phase 1 - map
-        lmax[i] = value;
-        lmax_pos[i].first = points[i].first;
-        lmax_pos[i].second = points[i].second;
+        lmin[i] = value;
+        lmin_pos[i].first = points[i].first;
+        lmin_pos[i].second = points[i].second;
 
         //phase 2 - local reduce of iteration iter
-        if(pgmax.value < lmax[i]){
-          pgmax.value = lmax[i];
-          pgmax.pos_x = lmax_pos[i].first;
-          pgmax.pos_y = lmax_pos[i].second;
+        if(pgmin.value > lmin[i]){
+          pgmin.value = lmin[i];
+          pgmin.pos_x = lmin_pos[i].first;
+          pgmin.pos_y = lmin_pos[i].second;
         }
       },
 
-      [](global_maximum &accum, const global_maximum other){
+      [](global_minimum &accum, const global_minimum other){
         //phase 2 - global reduce of iteration iter
-        if(accum < other){
+        if(accum > other){
           accum = other;
         }
       }
@@ -122,23 +121,23 @@ int main(int argc, char* argv[]){
   //all the other iterations here:
   for(int iter=0;iter<niter;iter++){
     pfr.parallel_reduce(
-      gmax,
-      gmax_id,
+      gmin,
+      gmin_id,
       0,pts,STRIDE,
       
-      [&points,&velocity,&lmax_pos,&lmax,&dis_x,&dis_y,&dre,&random_fraction,&_func,&gmax,&min_x,&max_x,&min_y,&max_y](const long i, global_maximum &pgmax) {
+      [&points,&velocity,&lmin_pos,&lmin,&dis_x,&dis_y,&dre,&random_fraction,&_func,&gmin,&min_x,&max_x,&min_y,&max_y](const long i, global_minimum &pgmin) {
         //phase 3 (of previous iteration) - map
         float r_1, r_2;
         r_1 = random_fraction(dre);
         r_2 = random_fraction(dre);
         velocity[i].first = 
                     A*velocity[i].first +
-                    B*r_1*(lmax_pos[i].first - points[i].first) +
-                    C*r_2*(gmax.pos_x - points[i].first);
+                    B*r_1*(lmin_pos[i].first - points[i].first) +
+                    C*r_2*(gmin.pos_x - points[i].first);
         velocity[i].second = 
                     A*velocity[i].second +
-                    B*r_1*(lmax_pos[i].second - points[i].second) +
-                    C*r_2*(gmax.pos_y - points[i].second);
+                    B*r_1*(lmin_pos[i].second - points[i].second) +
+                    C*r_2*(gmin.pos_y - points[i].second);
         points[i].first += velocity[i].first;
         points[i].second += velocity[i].second;
         points[i].first = max<float>(points[i].first,min_x);
@@ -148,23 +147,23 @@ int main(int argc, char* argv[]){
 
         //phase 1 - map
         float value = (_func)(points[i].first,points[i].second);
-        if(lmax[i] < value){
-          lmax[i] = value;
-          lmax_pos[i].first = points[i].first;
-          lmax_pos[i].second = points[i].second;
+        if(lmin[i] > value){
+          lmin[i] = value;
+          lmin_pos[i].first = points[i].first;
+          lmin_pos[i].second = points[i].second;
         }
 
         //phase 2 - local reduce of iteration iter
-        if(pgmax.value < lmax[i]){
-          pgmax.value = lmax[i];
-          pgmax.pos_x = lmax_pos[i].first;
-          pgmax.pos_y = lmax_pos[i].second;
+        if(pgmin.value > lmin[i]){
+          pgmin.value = lmin[i];
+          pgmin.pos_x = lmin_pos[i].first;
+          pgmin.pos_y = lmin_pos[i].second;
         }
       },
 
-      [](global_maximum &accum, const global_maximum other){
+      [](global_minimum &accum, const global_minimum other){
         //global reduce of iteration iter
-        if(accum < other){
+        if(accum > other){
           accum = other;
         }
       }
@@ -174,7 +173,7 @@ int main(int argc, char* argv[]){
 
   long int elapsed = std::chrono::system_clock::now().time_since_epoch().count() - t0;
   cout << "completion time (microseconds): " << elapsed/1000 << endl;
-  cout << "best extimate: " << gmax.value << " (x: " << gmax.pos_x << ", y: " << gmax.pos_y << ")" << endl;
+  cout << "best extimate: " << gmin.value << " (x: " << gmin.pos_x << ", y: " << gmin.pos_y << ")" << endl;
 
 
   return 0;

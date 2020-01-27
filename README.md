@@ -10,7 +10,7 @@ from the :globe_with_meridians:[Wikipedia page](https://en.wikipedia.org/wiki/Di
 > "It solves a problem by having a population of candidate solutions, here dubbed particles, and moving these particles around in the search-space according to simple mathematical formulae over the particle’s position and velocity."
 ---
 ## The project :pencil:
-This project aims at the implementation of a C++ multi-thread (and so faster) version of the PSO application.
+This project aims at the implementation of a C++ multi-thread (and so faster) version of the PSO application. The PSO technique is here utilized to perform an **approximated calculation of the minimum of a function ina 2-dimensional search space**.
 
 ---
 ## Run the code :rocket:
