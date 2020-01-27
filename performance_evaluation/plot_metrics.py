@@ -28,20 +28,20 @@ def plot_completion_time(seq,y_mt,y_ff,y_id) :
     return
 
 def plot_speed_up(seq,y_mt,y_ff,y_id) :
-    y_mt_su = [seq/y for y in y_mt]
-    y_ff_su = [seq/y for y in y_ff]
-    y_id_su = [seq/y for y in y_id]
+    y_mt_su = [(0 if y==0 else seq/y) for y in y_mt]
+    y_ff_su = [(0 if y==0 else seq/y) for y in y_ff]
+    y_id_su = [(0 if y==0 else seq/y) for y in y_id]
 
     plt.plot(nts, y_mt_su, 'red', label='c++ threads')
     plt.plot(nts, y_ff_su, 'green', label='fastflow', dashes=dashed)
     plt.plot(nts, y_id_su, 'blue', label='ideal', dashes=dash_dot)
-    plt.legend(loc='upper right')
+    plt.legend(loc='upper left')
     return
 
 def plot_efficiency(seq,y_mt,y_ff,y_id) :
-    y_mt_ef = [(seq/y)/(i+1) for (i,y) in enumerate(y_mt)]
-    y_ff_ef = [(seq/y)/(i+1) for (i,y) in enumerate(y_ff)]
-    y_id_ef = [(seq/y)/(i+1) for (i,y) in enumerate(y_id)]
+    y_mt_ef = [(1 if y==0 else (seq/y)/(i+1)) for (i,y) in enumerate(y_mt)]
+    y_ff_ef = [(1 if y==0 else (seq/y)/(i+1)) for (i,y) in enumerate(y_ff)]
+    y_id_ef = [(1 if y==0 else (seq/y)/(i+1)) for (i,y) in enumerate(y_id)]
 
     plt.plot(nts, y_mt_ef, 'red', label='c++ threads')
     plt.plot(nts, y_ff_ef, 'green', label='fastflow', dashes=dashed)
